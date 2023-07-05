@@ -1,0 +1,65 @@
+﻿@using AcademySystem.Core.Models;
+@model IEnumerable<AcademySystem.Core.Models.AppUser>
+@{
+    ViewData["Title"] = "Index";
+    var Logings = ViewData["Logings"] as List<Loging>;
+}
+
+<h1>Index</h1>
+<p>
+    <a class="btn btn-success" asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+
+            <th>
+                @Html.DisplayNameFor(model => model.UserName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PhoneNumber)
+            </th>
+            <th>
+                isActive
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td >
+                    @Html.DisplayFor(modelItem => item.UserName)
+                <td>
+                    @Html.DisplayFor(modelItem => item.Email)
+                </td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.PhoneNumber)
+                </td>
+                <td>
+                    @{
+                        var login = Logings!.FirstOrDefault(x => x.appUserId!.Equals(item.Id));
+                    }
+
+                    @if (login != null && login.IsLogging)
+                    {
+                        <div class="btn btn-success" style="min-width:25px;min-height:25px"></div>
+                    }else{
+                        <div class="btn btn-danger" style="min-width:25px;min-height:25px"></div>
+                    }
+                </td>
+                <td>
+                    <a class="btn btn-success" asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                    <br>
+                    <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+                
+            </tr>
+        }
+    </tbody>
+</table>

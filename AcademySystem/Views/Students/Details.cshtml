@@ -1,0 +1,113 @@
+﻿@model AcademySystem.Core.Models.Student
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Student</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.FirstName)
+        </dt>
+        
+        <dd class = "col-sm-6">
+            @Html.DisplayFor(model => model.FirstName)
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.SecondName)
+        </dt>
+        <dd class = "col-sm-6">
+            @Html.DisplayFor(model => model.SecondName)
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.ThirdName)
+        </dt>
+        <dd class = "col-sm-6">
+            @Html.DisplayFor(model => model.ThirdName)
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.LastName)
+        </dt>
+        <dd class = "col-sm-6">
+            @Html.DisplayFor(model => model.LastName)
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.Identity)
+        </dt>
+        <dd class = "col-sm-6">
+            @Html.DisplayFor(model => model.Identity)
+        </dd>
+        
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.Location)
+        </dt>
+        <dd class = "col-sm-6">
+            @Html.DisplayFor(model => model.Location)
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.PhoneNumber)
+        </dt>
+        <dd class = "col-sm-6">
+            @Html.DisplayFor(model => model.PhoneNumber)
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.BirthDay)
+        </dt>
+        <dd class = "col-sm-6">
+            @{
+                var dateB = Model.BirthDay.ToShortDateString();
+            }
+            @Html.DisplayFor(model => dateB)
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.DateOfEnrollment)
+        </dt>
+        <dd class = "col-sm-6">
+            @{
+                var dateE = Model.DateOfEnrollment.ToShortDateString();
+            }
+            @Html.DisplayFor(model => dateE)
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.Level)
+        </dt>
+        <dd class = "col-sm-6">
+            @Html.DisplayFor(model => model.Level)
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.Rating)
+        </dt>
+        <dd class = "col-sm-6">
+            @Html.DisplayFor(model => model.Rating) %
+        </dd>
+        <dt class = "col-sm-6">
+            @Html.DisplayNameFor(model => model.TimeOfRegistration)
+        </dt>
+        <dd class = "col-sm-6">
+            @{
+                var dateR = Model.TimeOfRegistration.ToShortDateString();
+            }
+            @Html.DisplayFor(model => dateR)
+        </dd>
+        <dt class="col-sm-6">
+            @Html.DisplayNameFor(model => model.ImageStudent)
+        </dt>
+        <dd class="col-sm-6">
+            <img src="~/images/@Model.ImageStudent" style="max-width:150px;max-height:150px" />
+        </dd>
+        <dt class="col-sm-6">
+            @Html.DisplayNameFor(model => model.ImageIdentity)
+        </dt>
+        <dd class="col-sm-6">
+            <img src="~/images/@Model.ImageIdentity" style="max-width:150px;max-height:150px" />
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>
