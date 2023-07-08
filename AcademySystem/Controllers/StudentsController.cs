@@ -9,54 +9,89 @@ using AcademySystem.Core.Dtos;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using AcademySystem.EF.Repositories;
+using AcademySystem.Core.ViewModel;
+using System.Linq.Dynamic.Core;
+using Hangfire;
 
 namespace Students.Web.Controllers
 {
     [Authorize]
     public class StudentsController : Controller
     {
-        private readonly IBaseRepository<Student> baseRepository;
-        private readonly UserManager<AppUser> _userManager;
-        private readonly IUserStore<AppUser> _userStore;
-        //private readonly IUserEmailStore<AppUser> _emailStore;
         private readonly IMapper mapper;
-        private readonly RoleManager<IdentityRole> roleManager;
-        private readonly ILogingInterface logingRepository;
-        private readonly IBaseRepository<Loging> logingBaseRepository;
-
-        public StudentsController(IBaseRepository<Student> baseRepository,
-            UserManager<AppUser> userManager,
-            IUserStore<AppUser> userStore,
-           // IUserEmailStore<AppUser> emailStore,
+        private readonly IAppUserService appUserService;
+        private readonly IStudentService studentService;
+        public StudentsController(
             IMapper mapper,
-            RoleManager<IdentityRole> roleManager,
-            ILogingInterface logingRepository,
-            IBaseRepository<Loging> logingBaseRepository)
+            IStudentService studentService,
+            IAppUserService appUserService)
         {
-            this.baseRepository = baseRepository;
-            _userManager = userManager;
-            _userStore = userStore;
-            //_emailStore = emailStore;
             this.mapper = mapper;
-            this.roleManager = roleManager;
-            this.logingRepository = logingRepository;
-            this.logingBaseRepository = logingBaseRepository;
+            this.appUserService = appUserService;
+            this.studentService = studentService;
+        }
+        [Authorize(Roles = "admin")]
+        public IActionResult Index()
+        {
+            //BackgroundJob.Enqueue(() => sendMassage("user@example.com"));
+
+            //Console.WriteLine(DateTime.Now);
+            //BackgroundJob.Schedule(() => sendMassage("user@example.com") , TimeSpan.FromSeconds(15));
+
+            RecurringJob.AddOrUpdate(() => sendMassage("Email@email.com"), Cron.Minutely());
+            return View();
+        }
+        [HttpPost]
+        public IActionResult GetAllStudents()
+        {
+
+            
+
+            var pageLength = int.Parse(Request.Form["length"]);
+            var skiped = int.Parse(Request.Form["start"]);
+            var searchData = Request.Form["search[value]"];
+            var sortColumn = Request.Form[string.Concat("columns[", Request.Form["order[0][column]"],"][name]")];
+            var sortDir = Request.Form["order[0][dir]"];
+
+            var students = studentService.GetAllStudents(searchData[0]);
+            var recordsTotal = students.Count();
+
+            if (!(string.IsNullOrEmpty(sortColumn) && string.IsNullOrEmpty(sortDir) ))
+                students = students.OrderBy(string.Concat(sortColumn , " " , sortDir));
+
+
+            var data = students.Skip(skiped).Take(pageLength).ToList();
+
+            var studentsViewModel = new List<StudentViewModel>();
+
+            if(students != null)
+                foreach (var item in data)
+                {
+                    var studentViewModel = new StudentViewModel()
+                    {
+                        Id = item.Id ,
+                        FullName = item.FirstName,
+                        Identity = item.Identity,
+                        Level = Enum.GetName(item.Level.GetType(), item.Level),
+                        PhoneNumber  = item.PhoneNumber
+                    };
+                    studentsViewModel.Add(studentViewModel);
+                }
+            
+            var jsonData = new {recordsFiltered =  recordsTotal , recordsTotal , data = studentsViewModel};
+
+            return Ok(jsonData);
         }
 
-        public async Task<ActionResult> Index()
+        public void sendMassage(string email)
         {
-            return View(await baseRepository.GetAllAsync());
-        }
-        // GET: StudentsController
-        public ActionResult GetById()
-        {
-            return View(baseRepository.GetById(1001));
+            Console.WriteLine($"Email : {email} . is Sent");
         }
 
         // GET: StudentsController/Details/5
-        public async Task<ActionResult> Details(int id)
+        public ActionResult Details(int id)
         {
-            return View(await baseRepository.GetByIdAsync(id));
+            return View(studentService.GetStudent(id));
         }
         [Authorize(Roles = "admin")]
         // GET: StudentsController/Create
@@ -74,7 +109,6 @@ namespace Students.Web.Controllers
         [Authorize(Roles ="admin")]
         // POST: StudentsController/Create
         [HttpPost]
-        //[ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(IFormFile ImageStd , IFormFile ImageId, StudentDto studentDto)
         {
             ViewData["Enum"] = Enum.GetValues(typeof(AcademicLevel)).Cast<AcademicLevel>()
@@ -89,69 +123,38 @@ namespace Students.Web.Controllers
                 {
                     if (studentDto != null)
                     {
-                        var user = CreateUser();
-                        await _userStore.SetUserNameAsync(user, studentDto.Email, CancellationToken.None);
-                       // await _emailStore.SetEmailAsync(user, studentDto.Email, CancellationToken.None);
-                        var result = await _userManager.CreateAsync(user, "user_123_USER");
-
-                        if (result.Succeeded)
+                        var appUserDto = new AppUserDto()
                         {
-                            var role = await roleManager.RoleExistsAsync("student");
-                            if (!role)
-                                await roleManager.CreateAsync(new IdentityRole { Name = "student" });
-                            var Loging = new Loging() {
-                                appUser = user,
-                                appUserId = user.Id,
-                                IsLogging = false,
-                            };
-                            logingBaseRepository.Create(Loging);
-                            var userId = await _userManager.GetUserIdAsync(user);
-                            user = await _userManager.FindByIdAsync(userId);
-                            var roleResult = await _userManager.AddToRoleAsync(user, "student");
+                            Email = studentDto.Email,
+                            PhoneNumber = studentDto.PhoneNumber,
+                            UserName = studentDto.Email,
+                            PassWord = "user_123_User",
+                            ConfirmPassWord = "user_123_User",
+                        };
+                        var userResult = await appUserService.CreateAppUser(appUserDto , "student");
+                        if (!string.IsNullOrWhiteSpace(userResult))
+                        {
                             var stdName = await UploadFile(ImageStd);
                             var idName = await UploadFile(ImageId);
                             if (string.IsNullOrEmpty(stdName) || string.IsNullOrWhiteSpace(idName))
                                 return View();
                             //var student = mapper.Map<Student>(studentDto);
-                            var student = new Student()
-                            {
-                                Id = studentDto.Id,
-                                BirthDay = studentDto.BirthDay,
-                                FirstName = studentDto.FirstName,
-                                SecondName = studentDto.LastName,
-                                ThirdName = studentDto.ThirdName,
-                                LastName = studentDto.LastName,
-                                Identity = studentDto.Identity,
-                                Level = studentDto.Level,
-                                Location = studentDto.Location,
-                                PhoneNumber = studentDto.PhoneNumber,
-                                Rating = studentDto.Rating,
-                                DateOfEnrollment = studentDto.DateOfEnrollment,
-                                
-                            };
-                            student.ImageStudent = stdName;
-                            student.ImageIdentity = idName;
-                            student.appUserId = userId;
-                            var obj = baseRepository.Create(student);
-                            if (obj == null)
-                                return View();
+                            
+                            studentDto.ImageStudent = stdName;
+                            studentDto.ImageIdentity = idName;
+                            studentService.CreateStudent(studentDto , userResult);
                         }
                         else
                         {
-                            foreach (var error in result.Errors)
-                            {
-                                ModelState.AddModelError(string.Empty, error.Description);
-
-                            }
                             return View();
                         }
                     }
                     
                     return RedirectToAction(nameof(Index));
                 }
-                catch
+                catch(Exception ex)
                 {
-                    return View();
+                    return Ok($"Error : {ex}");
                 }
             }
             return View();
@@ -184,10 +187,10 @@ namespace Students.Web.Controllers
             }
             return null;
         }
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,student")]
 
         // GET: StudentsController/Edit/5
-        public async Task<ActionResult> Edit(int id)
+        public ActionResult Edit(int id)
         {
             ViewData["Enum"] = Enum.GetValues(typeof(AcademicLevel)).Cast<AcademicLevel>()
                                 .Select(v => new SelectListItem
@@ -195,12 +198,11 @@ namespace Students.Web.Controllers
                                     Text = v.ToString(),
                                     Value = ((int)v).ToString()
                                 }).ToList();
-            return View(await baseRepository.GetByIdAsync(id));
+            return View(studentService.GetStudent(id));
         }
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,student")]
         // POST: StudentsController/Edit/5
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<ActionResult> EditAsync(IFormFile ImageStd,IFormFile ImageId ,int id, Student student)
         {
             ViewData["Enum"] = Enum.GetValues(typeof(AcademicLevel)).Cast<AcademicLevel>()
@@ -217,32 +219,31 @@ namespace Students.Web.Controllers
                         return NotFound();
                     var stdName = await UploadFile(ImageStd);
                     var idName = await UploadFile(ImageId);
-                    if (!string.IsNullOrEmpty(stdName) && !string.IsNullOrWhiteSpace(idName))
+                    if (!string.IsNullOrWhiteSpace(stdName) && !string.IsNullOrWhiteSpace(idName))
                     {
                         student.ImageStudent = stdName;
                         student.ImageStudent = idName;
                     }
-                    var obj = baseRepository.Update(student);
-                    if (obj == null)
-                        return View(baseRepository.GetByIdAsync(id));
+                    var obj = studentService.UpdateStudent(student);
+                    if (obj <=0)
+                        return View(studentService.GetStudent(id));
                 }
                 return RedirectToAction(nameof(Index));
             }
             catch
             {
-                return View(baseRepository.GetByIdAsync(id));
+                return View(studentService.GetStudent(id));
             }
         }
-
+        [Authorize(Roles = "admin")]
         // GET: StudentsController/Delete/5
-        public async Task<ActionResult> Delete(int id)
+        public ActionResult Delete(int id)
         {
-            return View(await baseRepository.GetByIdAsync(id));
+            return View(studentService.GetStudent(id));
         }
-
+        [Authorize(Roles = "admin")]
         // POST: StudentsController/Delete/5
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Delete(int id,string appUserId, Student student)
         {
             try
@@ -251,16 +252,17 @@ namespace Students.Web.Controllers
                 {
                     if (id != student.Id)
                         return NotFound();
-                    var obj = baseRepository.Delete(id);
+                    var obj = studentService.DeleteStudent(id);
                     if (obj == null)
-                        return View(baseRepository.GetByIdAsync(id));
-                    await _userManager.DeleteAsync(await _userManager.FindByIdAsync(appUserId));
+                        return View(studentService.GetStudent(id));
+                    if (string.IsNullOrWhiteSpace(appUserId)) return NotFound();
+                    await appUserService.DeleteAppUser(appUserId);
                 }
                 return RedirectToAction(nameof(Index));
             }
             catch
             {
-                return View(baseRepository.GetByIdAsync(id));
+                return View(studentService.GetStudent(id));
             }
         }
     }

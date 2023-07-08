@@ -21,25 +21,25 @@ namespace AcademySystem.Web.Areas.Identity.Pages.Account
         private readonly ILogger<LogoutModel> _logger;
         private readonly UserManager<AppUser> _userManager;
         private readonly ILogingInterface logingRepository;
-        private readonly IBaseRepository<Loging> logingBaseRepository;
+        private readonly ILogingInterface logingInterface;
 
         public LogoutModel(
             SignInManager<AppUser> signInManager,
             ILogger<LogoutModel> logger,
             UserManager<AppUser> userManager,
             ILogingInterface logingRepository,
-            IBaseRepository<Loging> logingBaseRepository)
+            ILogingInterface logingInterface)
         {
             _signInManager = signInManager;
             _logger = logger;
             _userManager = userManager;
             this.logingRepository = logingRepository;
-            this.logingBaseRepository = logingBaseRepository;
+            this.logingInterface = logingInterface;
         }
 
         public async Task<IActionResult> OnPost(string returnUrl = null)
         {
-            //var user = await _userManager.GetUserAsync(HttpContext.User);
+            //var user = await _userManager.GetUserAsync(User.Identity.Name);
             //var loging = logingRepository.GetByappUserId(user.Id);
             //loging.IsLogging = false;
             //logingBaseRepository.Update(loging);

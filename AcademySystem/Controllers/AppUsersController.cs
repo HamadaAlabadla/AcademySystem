@@ -1,107 +1,103 @@
 ﻿using AcademySystem.Core.Dtos;
 using AcademySystem.Core.Interfaces;
 using AcademySystem.Core.Models;
+using AcademySystem.Core.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using System.Data;
 
 namespace AcademySystem.Web.Controllers
 {
+    [Authorize]
     public class AppUsersController : Controller
     {
-        private readonly UserManager<AppUser> userManager;
-        private readonly RoleManager<IdentityRole> roleManager;
-        private readonly IBaseRepository<Loging> baseRepository;
+        private readonly IAppUserService appUserService;
+        private readonly ILogingInterface logingInterface;
 
-        public AppUsersController(UserManager<AppUser> userManager,
-            RoleManager<IdentityRole> roleManager,
-            IBaseRepository<Loging> baseRepository)
+        public AppUsersController(
+            IAppUserService appUserService,
+            ILogingInterface logingInterface)
         {
-            this.userManager = userManager;
-            this.roleManager = roleManager;
-            this.baseRepository = baseRepository;
+            this.appUserService = appUserService;
+            this.logingInterface = logingInterface;
         }
 
 
         // GET: AppUsersController
-        public async Task<ActionResult> Index()
+        [Authorize(Roles = "admin")]
+        public ActionResult Index()
         {
-            var Logings = await baseRepository.GetAllAsync();
-            ViewData["Logings"] = Logings;
-            return View(userManager.Users.ToList());
+            return View();
+        }
+        [HttpPost]
+        public IActionResult GetAllUsers()
+        {
+            var pageLength = int.Parse(Request.Form["length"]);
+            var skiped = int.Parse(Request.Form["start"]);
+
+            var appUsers = appUserService.GetAllAppUsers();
+            var appUsersCount = appUsers.Count();
+
+            var data = appUsers.Skip(skiped).Take(pageLength).ToList();
+
+
+           // var logings = logingInterface.GetAllLogings(data);
+            //var appUsersViewModels = new List<AppUserViewModel>();
+            //if(data != null )
+            //    foreach (var item in data)
+            //    {
+            //        var appUserViewModel = new AppUserViewModel()
+            //        {
+            //            Email = item.Email,
+            //            PhoneNumber = item.PhoneNumber,
+            //            UserName = item.UserName,
+            //            isActive = (logings.FirstOrDefault(x => x.appUserId!.Equals(item.Id)) == null) ? false : logings.First(x => x.appUserId!.Equals(item.Id)).IsLogging,
+            //        };
+            //        appUsersViewModels.Add(appUserViewModel);
+            //    }
+            var json = new { recordsFiltered = appUsersCount, appUsersCount, data = appUsers };
+            return Ok(json);
         }
 
-
+        [Authorize(Roles = "admin")]
         // GET: AppUsersController/Create
         public ActionResult Create()
         {
             return View();
         }
-
+        [Authorize(Roles = "admin")]
         // POST: AppUsersController/Create
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(AppUserDto appUserDto)
         {
-            var user = CreateUser();
             try
             {
                 
                 if (appUserDto == null || !appUserDto.PassWord!.Equals(appUserDto.ConfirmPassWord))
                     return View();
-                
-                user = new AppUser()
-                {
-                    UserName = appUserDto.UserName,
-                    Email = appUserDto.Email,
-                    PhoneNumber = appUserDto.PhoneNumber,
-                };
-                // await _emailStore.SetEmailAsync(user, studentDto.Email, CancellationToken.None);
-                var result = await userManager.CreateAsync(user, appUserDto.PassWord);
 
-                if (result.Succeeded)
-                {
-                    var role = await roleManager.RoleExistsAsync("user");
-                    if (!role)
-                        await roleManager.CreateAsync(new IdentityRole { Name = "user" });
-                    await userManager.AddToRoleAsync(user, "user");
+                var result = await appUserService.CreateAppUser(appUserDto, "user");
 
-                    var Loging = new Loging()
-                    {
-                        appUser = user,
-                        appUserId = user.Id,
-                        IsLogging = false,
-                    };
-                    baseRepository.Create(Loging);
+                if (!string.IsNullOrWhiteSpace(result))
+                {
                     return RedirectToAction(nameof(Index));
                 }
-                return View(user);
+                return View(appUserDto);
             }
             catch
             {
-                return View(user);
+                return View(appUserDto);
             }
         }
-
-        private AppUser CreateUser()
-        {
-            try
-            {
-                return Activator.CreateInstance<AppUser>();
-            }
-            catch
-            {
-                throw new InvalidOperationException($"Can't create an instance of '{nameof(IdentityUser)}'. " +
-                    $"Ensure that '{nameof(IdentityUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
-                    $"override the register page in /Areas/Identity/Pages/Account/Register.cshtml");
-            }
-        }
-
+        [Authorize(Roles = "admin,student")]
         // GET: AppUsersController/Edit/5
         public async Task<ActionResult> Edit(string id)
         {
-            var user = await userManager.FindByIdAsync(id);
+            var user = await appUserService.GetAppUser(id);
+            if (user == null) return NotFound();
             return View( new AppUserDto()
             {
                 Id = user.Id,
@@ -110,22 +106,22 @@ namespace AcademySystem.Web.Controllers
                 Email = user.Email
             });
         }
-
+        [Authorize(Roles = "admin,student")]
         // POST: AppUsersController/Edit/5
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(string id, AppUserDto appUserDto)
         {
             try
             {
                 if (appUserDto == null || !appUserDto.Id!.Equals(id))
                     return View();
-                var user = await userManager.FindByIdAsync(id);
+                var user = await appUserService.GetAppUser(id);
+                if (user == null) return NotFound();
                 user.Email = appUserDto.Email;
                 user.PhoneNumber = appUserDto.PhoneNumber;
                 user.UserName = appUserDto.UserName;
 
-                await userManager.UpdateAsync(user);
+                await appUserService.UpdateAppUser(user);
                 
                 return RedirectToAction(nameof(Index));
             }
@@ -134,23 +130,23 @@ namespace AcademySystem.Web.Controllers
                 return View(appUserDto);
             }
         }
-
+        [Authorize(Roles = "admin")]
         // GET: AppUsersController/Delete/5
         public async Task<ActionResult> Delete(string id)
         {
-            return View(await userManager.FindByIdAsync(id));
+            return View(await appUserService.DeleteAppUser(id));
         }
-
+        [Authorize(Roles = "admin")]
         // POST: AppUsersController/Delete/5
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Delete(string id, AppUser appUser)
         {
-            var user = await userManager.FindByIdAsync(id);
+            var user = await appUserService.GetAppUser(id);
+            if (user == null) return NotFound();
             try
             {
                 
-                await userManager.DeleteAsync(user);
+                await appUserService.DeleteAppUser(user.Id);
                 return RedirectToAction(nameof(Index));
             }
             catch

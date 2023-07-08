@@ -26,20 +26,20 @@ namespace AcademySystem.Web.Areas.Identity.Pages.Account
         private readonly UserManager<AppUser> userManager;
         private readonly ILogger<LoginModel> _logger;
         private readonly ILogingInterface logingRepository;
-        private readonly IBaseRepository<Loging> logingBaseRepository;
+        private readonly ILogingInterface logingInterface;
 
         public LoginModel(
             SignInManager<AppUser> signInManager, 
             ILogger<LoginModel> logger,
             ILogingInterface logingRepository,
             UserManager<AppUser> userManager,
-            IBaseRepository<Loging> logingBaseRepository)
+            ILogingInterface logingInterface)
         {
             _signInManager = signInManager;
             _logger = logger;
             this.logingRepository = logingRepository;
             this.userManager = userManager;
-            this.logingBaseRepository = logingBaseRepository;
+            this.logingInterface = logingInterface;
         }
 
         /// <summary>
@@ -132,7 +132,12 @@ namespace AcademySystem.Web.Areas.Identity.Pages.Account
                     var user = await userManager.FindByNameAsync(Input.Email);
                     var loging = logingRepository.GetByappUserId(user.Id);
                     loging.IsLogging = true;
-                    logingBaseRepository.Update(loging); 
+                    logingInterface.UpdateLoging(loging);
+                    var roles = await userManager.GetRolesAsync(user);
+                    if (roles.Contains("student"))
+                    {
+
+                    }
                     return RedirectToAction(nameof(Index),nameof(Students));
                 }
                 if (result.RequiresTwoFactor)

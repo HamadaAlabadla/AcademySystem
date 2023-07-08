@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Create";
     var ListEnum = new SelectList(ViewData["Enum"] as List<SelectListItem>, "Value", "Text");
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <h1>Create</h1>

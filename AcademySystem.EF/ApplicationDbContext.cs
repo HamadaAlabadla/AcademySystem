@@ -74,7 +74,7 @@ namespace AcademySystem.EF
 
         
 
-        public DbSet<Student>? Students { get; set; }
+        public DbSet<Student> Students { get; set; }
         public DbSet<Loging> Logings { get; set; }
     }
 }

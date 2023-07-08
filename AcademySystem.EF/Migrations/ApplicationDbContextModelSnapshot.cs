@@ -89,9 +89,9 @@ namespace AcademySystem.EF.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "7dc4349b-ca88-46c3-bdd7-4ecb093f82cf",
+                            Id = "5fb2d251-875e-467f-8a01-ec43edd8b4d2",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "bc658eb0-90cd-46b5-bb4b-6b3962ef5cc3",
+                            ConcurrencyStamp = "452f907d-db61-4236-af38-b1085358c3b5",
                             Email = "Admin@admin",
                             EmailConfirmed = false,
                             LockoutEnabled = true,
@@ -100,7 +100,7 @@ namespace AcademySystem.EF.Migrations
                             PasswordHash = "AQAAAAEAACcQAAAAED3EhZpief2srOsE6dbRM46UJ8fDiKLX5TuyuLO9WafYZ1nPgvDpqg//t/iV3E38zA==",
                             PhoneNumber = "0595195186",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "742b1c35-6431-47f8-8894-fcff62c0d73b",
+                            SecurityStamp = "89032b4c-717f-4f4d-b94e-9841de41e5f7",
                             TwoFactorEnabled = false,
                             UserName = "Admin@admin"
                         });
@@ -121,18 +121,18 @@ namespace AcademySystem.EF.Migrations
                     b.HasData(
                         new
                         {
-                            appUserId = "7dc4349b-ca88-46c3-bdd7-4ecb093f82cf",
+                            appUserId = "5fb2d251-875e-467f-8a01-ec43edd8b4d2",
                             IsLogging = false
                         });
                 });
 
             modelBuilder.Entity("AcademySystem.Core.Models.Student", b =>
                 {
-                    b.Property<int?>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<DateTime>("BirthDay")
                         .HasColumnType("datetime2");
@@ -225,8 +225,8 @@ namespace AcademySystem.EF.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "f37e946c-0af2-4ec4-be20-037b7bb7c08b",
-                            ConcurrencyStamp = "b0b73329-a8ec-4032-8396-241c3c827032",
+                            Id = "2ae1d1e1-00d2-4bbe-846e-b88f2e9a6fd1",
+                            ConcurrencyStamp = "a1f0683d-40ec-4e92-93fe-22245b844950",
                             Name = "admin"
                         });
                 });
@@ -320,8 +320,8 @@ namespace AcademySystem.EF.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "7dc4349b-ca88-46c3-bdd7-4ecb093f82cf",
-                            RoleId = "f37e946c-0af2-4ec4-be20-037b7bb7c08b"
+                            UserId = "5fb2d251-875e-467f-8a01-ec43edd8b4d2",
+                            RoleId = "2ae1d1e1-00d2-4bbe-846e-b88f2e9a6fd1"
                         });
                 });
 

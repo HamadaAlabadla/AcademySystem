@@ -11,10 +11,10 @@ namespace AcademySystem.Core.Models
     public class Student
     {
         [Key]
-        public int? Id { get; set; }
+        public int Id { get; set; }
         [Required,DataType(DataType.Text)]
         public string? FirstName { get; set; }
-        [Required, DataType(DataType.Text)]
+        [Required, DataType(DataType.Text),StringLength(20)]
         public string? SecondName { get; set; }
         [Required, DataType(DataType.Text)]
         public string? ThirdName { get; set; }

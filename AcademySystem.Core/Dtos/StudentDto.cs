@@ -12,7 +12,7 @@ namespace AcademySystem.Core.Dtos
     public class StudentDto
     {
         [Key]
-        public int? Id { get; set; }
+        public int Id { get; set; }
         [Required, DataType(DataType.Text)]
         public string? FirstName { get; set; }
         [Required, DataType(DataType.Text)]

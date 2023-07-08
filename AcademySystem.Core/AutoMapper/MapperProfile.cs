@@ -12,14 +12,9 @@ namespace AcademySystem.Core.AutoMapper
     public class MapperProfile : Profile
     {
         public MapperProfile()
-        { 
-            CreateMap<StudentDto , Student>()
-                .ForMember(b => b.ImageIdentity,b => b.Ignore())
-                .ForMember(b => b.ImageStudent,b => b.Ignore())
-                .ForMember(b => b.TimeOfRegistration,b => b.Ignore())
-                .ForMember(b => b.appUserId,b => b.Ignore())
-                .ForMember(b => b.appUser,b => b.Ignore())
-                .ReverseMap();
+        {
+            CreateMap<Student, StudentDto>()
+                .ForMember(dest => dest.ImageIdentity , src => src.MapFrom(src => src.ImageIdentity));
         }
     }
 }

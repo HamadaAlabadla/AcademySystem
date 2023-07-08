@@ -3,6 +3,7 @@ using AcademySystem.Core.Models;
 using AcademySystem.EF;
 using AcademySystem.EF.Repositories;
 using AcademySystem.Web.Areas.Identity.Pages.Account;
+using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,9 @@ var connectionString = builder.Configuration.GetConnectionString("AcademySystemC
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+builder.Services.AddHangfire(x => x.UseSqlServerStorage(connectionString));
+builder.Services.AddHangfireServer();
+
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
@@ -25,8 +29,9 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 })
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
-builder.Services.AddTransient(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddTransient<ILogingInterface, LogingRepository>();
+builder.Services.AddTransient<IAppUserService, AppUserService>();
+builder.Services.AddTransient<IStudentService, StudentService>();
 builder.Services.AddRazorPages();
 builder.Services.AddAutoMapper(typeof(Program));
 //builder.Services.AddMvc()
@@ -60,6 +65,7 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseHangfireDashboard("/dashboard");
 
 app.UseRouting();
 
